@@ -11,7 +11,6 @@ from utils.sms import sms_sender
 
 scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
 
-
 RECORD_IMAGE_URL = '/media/record/'
 
 
@@ -81,6 +80,40 @@ def search_record(request):
         } for record in records
     ]
     return JsonResponse({'errno': 0, 'record_num': record_num, 'data': data})
+
+
+@csrf_exempt
+def get_weekly_record(request):
+    user = User.objects.get(id=int(get_id(request.META.get('HTTP_TOKEN'))))
+    records = Record.objects.filter(Q(time__gt=datetime.date.today() - datetime.timedelta(days=7)) &
+                                    Q(user=user)).order_by('-time')
+    record_num = len(records)
+    data = {}
+    num = {}
+    for record in records:
+        if record.date in data:
+            num[record.date] += 1
+            data[record.date].append({
+                'id': record.id,
+                'time': record.time.strftime('%Y-%m-%d %H:%M:%S'),
+                'description': record.description,
+                'image_list': [
+                    record_image.image for record_image in RecordImage.objects.filter(record=record)
+                ]
+            })
+        else:
+            num[record.date] = 1
+            data[record.date] = [
+                {
+                    'id': record.id,
+                    'time': record.time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'description': record.description,
+                    'image_list': [
+                        record_image.image for record_image in RecordImage.objects.filter(record=record)
+                    ]
+                }
+            ]
+    return JsonResponse({'errno': 0, 'record_num': record_num, 'num_dict': num, 'data_dict': data})
 
 
 def handle_image(image, path):
