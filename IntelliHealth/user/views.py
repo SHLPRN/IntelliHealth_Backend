@@ -44,13 +44,14 @@ def get_user_info(request):
 def add_record(request):
     user = User.objects.get(id=int(get_id(request.META.get('HTTP_TOKEN'))))
     now = datetime.datetime.now()
-    image_list = ''
     record = Record()
     record.user = user
     record.date = now.strftime('%Y-%m-%d')
     record.time = now
-    record.image_list = image_list
-    record.description = request.POST.get('description')
+    description = request.POST.get('description')
+    if description is None or description == '':
+        description = '暂无打卡说明'
+    record.description = description
     record.save()
     image_num = int(request.POST.get('image_num'))
     for i in range(1, image_num + 1):
@@ -60,13 +61,26 @@ def add_record(request):
         record_image.image = handle_image(image, os.path.join(RECORD_IMAGE_URL, f'record_{record.id}_image_{i}' +
                                                               os.path.splitext(str(image.name))[1]))
         record_image.save()
-        if i == 1:
-            image_list += f'{record_image.id}'
-        else:
-            image_list += f', {record_image.id}'
-    record.image_list = image_list
-    record.save()
     return JsonResponse({'errno': 0, 'msg': '打卡成功'})
+
+
+@csrf_exempt
+def search_record(request):
+    user = User.objects.get(id=int(get_id(request.META.get('HTTP_TOKEN'))))
+    date = request.POST.get('date')
+    records = Record.objects.filter(Q(user=user) & Q(date=date)).order_by('-time')
+    record_num = len(records)
+    data = [
+        {
+            'id': record.id,
+            'time': record.time.strftime('%Y-%m-%d %H:%M:%S'),
+            'description': record.description,
+            'image_list': [
+                record_image.image for record_image in RecordImage.objects.filter(record=record)
+            ]
+        } for record in records
+    ]
+    return JsonResponse({'errno': 0, 'record_num': record_num, 'data': data})
 
 
 def handle_image(image, path):
