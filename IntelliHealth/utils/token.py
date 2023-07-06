@@ -50,6 +50,10 @@ def get_payload(token):
     return payload
 
 
+def get_id(token):
+    return get_payload(token)[f'{get_identity(token)}_id']
+
+
 def get_identity(token):
     payload = get_payload(token)
     return payload['identity']
