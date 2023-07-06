@@ -1,10 +1,15 @@
 import os
 import datetime
 
+from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from apscheduler.schedulers.background import BackgroundScheduler
 from .models import *
 from utils.token import *
+from utils.sms import sms_sender
+
+scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
 
 
 RECORD_IMAGE_URL = '/media/record/'
@@ -21,6 +26,18 @@ def login(request):
         return JsonResponse({'errno': 1005, 'msg': '密码错误'})
     token = create_token('user', user.id)
     return JsonResponse({'errno': 0, 'msg': '登录成功', 'token': token})
+
+
+@csrf_exempt
+def get_user_info(request):
+    user = User.objects.get(id=int(get_id(request.META.get('HTTP_TOKEN'))))
+    return JsonResponse({
+        'errno': 0,
+        'id': user.id,
+        'name': user.name,
+        'nickname': user.nickname,
+        'phone': user.phone
+    })
 
 
 @csrf_exempt
@@ -57,3 +74,21 @@ def handle_image(image, path):
         for chunk in image.chunks():
             f.write(chunk)
     return path
+
+
+def record_reminder():
+    users = User.objects.all()
+    for user in users:
+        if len(Record.objects.filter(Q(time__gt=datetime.date.today() - datetime.timedelta(days=1)) &
+                                     Q(user=user))) == 0:
+            status = sms_sender(
+                user.phone,
+                1,
+                [
+                    user.name,
+                ]
+            )
+
+
+scheduler.add_job(record_reminder, "cron", hour=18, minute=0, second=0)
+# scheduler.start()
