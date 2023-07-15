@@ -34,7 +34,7 @@ class RecordImage(models.Model):
 class User(models.Model):
     name = models.CharField(max_length=50)
     nickname = models.CharField(max_length=50)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(unique=True, max_length=15)
     password = models.CharField(max_length=20)
 
     class Meta:
