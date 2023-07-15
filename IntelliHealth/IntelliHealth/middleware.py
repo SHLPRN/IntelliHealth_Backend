@@ -24,7 +24,10 @@ class AuthorizeMiddleware(MiddlewareMixin):
                     identify = 'admin'
                 status = check_token(identify, token)
                 if status == 0:
-                    pass
+                    if request.path == '/api/user/checkToken/':
+                        return JsonResponse({'errno': 0, 'msg': '成功'})
+                    else:
+                        pass
                 elif status == 1:
                     return JsonResponse({'errno': 1002, 'msg': "登录已过期"})
                 else:
