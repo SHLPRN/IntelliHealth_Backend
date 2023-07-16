@@ -88,12 +88,12 @@ def get_weekly_record(request):
     records = Record.objects.filter(Q(time__gt=datetime.date.today() - datetime.timedelta(days=7)) &
                                     Q(user=user)).order_by('-time')
     record_num = len(records)
-    data = {}
-    num = {}
+    mid_data = {}
+    date_list = []
     for record in records:
-        if record.date in data:
-            num[record.date] += 1
-            data[record.date].append({
+        if record.date in mid_data:
+            mid_data[record.date]['num'] += 1
+            mid_data[record.date]['record_list'].append({
                 'id': record.id,
                 'time': record.time.strftime('%Y-%m-%d %H:%M:%S'),
                 'description': record.description,
@@ -102,18 +102,25 @@ def get_weekly_record(request):
                 ]
             })
         else:
-            num[record.date] = 1
-            data[record.date] = [
-                {
-                    'id': record.id,
-                    'time': record.time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'description': record.description,
-                    'image_list': [
-                        record_image.image for record_image in RecordImage.objects.filter(record=record)
-                    ]
-                }
-            ]
-    return JsonResponse({'errno': 0, 'record_num': record_num, 'num_dict': num, 'data_dict': data})
+            date_list.append(record.date)
+            mid_data[record.date] = {
+                'date': record.date,
+                'num': 1,
+                'record_list': [
+                    {
+                        'id': record.id,
+                        'time': record.time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'description': record.description,
+                        'image_list': [
+                            record_image.image for record_image in RecordImage.objects.filter(record=record)
+                        ]
+                    }
+                ]
+            }
+    data = [
+        mid_data[date] for date in date_list
+    ]
+    return JsonResponse({'errno': 0, 'record_num': record_num, 'data': data})
 
 
 def handle_image(image, path):
