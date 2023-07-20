@@ -23,7 +23,7 @@ def login(request):
     password = request.POST.get('password')
     if user.password != password:
         return JsonResponse({'errno': 1005, 'msg': '密码错误'})
-    token = create_token('user', user.id)
+    token = create_token(user.id)
     return JsonResponse({'errno': 0, 'msg': '登录成功', 'token': token})
 
 
