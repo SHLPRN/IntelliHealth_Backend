@@ -7,4 +7,5 @@ urlpatterns = [
     path('add_record/', add_record, name='add_record'),
     path('search_record/', search_record, name='search_record'),
     path('get_weekly_record/', get_weekly_record, name='get_weekly_record'),
+    path('get_other_record/', get_other_record, name='get_other_record'),
 ]
