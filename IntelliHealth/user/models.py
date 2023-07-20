@@ -1,16 +1,6 @@
 from django.db import models
 
 
-class Administrator(models.Model):
-    name = models.CharField(max_length=50)
-    phone = models.CharField(max_length=15)
-    password = models.CharField(max_length=20)
-
-    class Meta:
-        managed = False
-        db_table = 'Administrator'
-
-
 class Record(models.Model):
     user = models.ForeignKey('User', models.DO_NOTHING, db_column='user')
     time = models.DateTimeField()
