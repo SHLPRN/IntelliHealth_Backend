@@ -131,4 +131,3 @@ SMS_SIGN_NAME = '个人开发网'
 SMS_MODE = [
     SECRETS['SMS_MODE_1'],
 ]
-
